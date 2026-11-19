@@ -13,7 +13,11 @@ struct SpineGeneratorTests {
             SpineGenerator.style(title: $0.title, author: $0.author, pageCount: $0.pageCount)
         }
         let distinctColors = Set(styles.map(\.base))
-        #expect(distinctColors.count >= 6)
+        #expect(distinctColors.count >= 8)
+
+        // No single color should dominate the demo shelf.
+        let counts = Dictionary(grouping: styles, by: \.base).mapValues(\.count)
+        #expect((counts.values.max() ?? 0) <= 5)
     }
 
     static let widthCases: [(Int?, Double)] = [

@@ -46,7 +46,7 @@ enum SpineGenerator {
     private static let espresso = RGB(hex: 0x3A2618)
 
     static func style(title: String, author: String, pageCount: Int?) -> SpineStyle {
-        let seed = StableHash.fnv1a("\(normalized(title))|\(normalized(author))")
+        let seed = StableHash.mix(StableHash.fnv1a("\(normalized(title))|\(normalized(author))"))
 
         let base = palette[Int(seed % UInt64(palette.count))]
         let isDark = base.relativeLuminance < 0.35

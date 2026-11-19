@@ -38,7 +38,9 @@ struct BookSpineView: View {
                 Text(book.authorInitials)
                     .font(.system(size: 8, weight: .bold, design: .serif))
                     .foregroundStyle(Color(style.text).opacity(0.85))
-                    .frame(height: 14)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(width: max(style.width - 6, 8), height: 14)
             }
             .frame(width: style.width, height: height)
         }

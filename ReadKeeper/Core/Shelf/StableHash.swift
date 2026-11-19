@@ -11,4 +11,12 @@ enum StableHash {
         }
         return hash
     }
+
+    /// SplitMix64 finalizer: spreads the bits so `seed % n` picks colors evenly.
+    static func mix(_ value: UInt64) -> UInt64 {
+        var z = value &+ 0x9e37_79b9_7f4a_7c15
+        z = (z ^ (z >> 30)) &* 0xbf58_476d_1ce4_e5b9
+        z = (z ^ (z >> 27)) &* 0x94d0_49bb_1331_11eb
+        return z ^ (z >> 31)
+    }
 }
