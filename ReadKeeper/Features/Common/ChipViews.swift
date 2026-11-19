@@ -134,7 +134,11 @@ struct ReadingProgressBar: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Theme.ink.opacity(0.1))
                 Capsule()
-                    .fill(Theme.accent)
+                    .fill(LinearGradient(
+                        colors: [Theme.accent.opacity(0.7), Theme.accent],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
                     .frame(width: max(CGFloat(height), proxy.size.width * CGFloat(min(max(fraction, 0), 1))))
                     .opacity(fraction > 0 ? 1 : 0)
             }

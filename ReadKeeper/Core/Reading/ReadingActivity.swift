@@ -23,6 +23,21 @@ enum ReadingActivity {
         return days
     }
 
+    /// "Read today", "Last read yesterday", "Last read 3 days ago", or nil if never logged.
+    static func lastReadText(lastRead: Date?, now: Date, calendar: Calendar = .current) -> String? {
+        guard let lastRead else { return nil }
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: lastRead),
+            to: calendar.startOfDay(for: now)
+        ).day ?? 0
+        switch days {
+        case ..<1: return "Read today"
+        case 1: return "Last read yesterday"
+        default: return "Last read \(days) days ago"
+        }
+    }
+
     static func weekSummary(books: [Book], now: Date, calendar: Calendar = .current) -> WeekSummary {
         guard let week = calendar.dateInterval(of: .weekOfYear, for: now) else {
             return WeekSummary(pages: 0, listeningMinutes: 0, daysRead: 0)

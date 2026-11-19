@@ -26,7 +26,11 @@ struct ShelfView: View {
                 ScrollView {
                     VStack(spacing: 28) {
                         if !reading.isEmpty {
-                            CurrentlyReadingStrip(books: reading, namespace: zoomNamespace) { book in
+                            let streak = StreakCalculator.summary(
+                                activityDays: ReadingActivity.activityDays(books: books),
+                                today: .now
+                            )
+                            CurrentlyReadingStrip(books: reading, streakDays: streak.current, namespace: zoomNamespace) { book in
                                 logTarget = book
                             } onOpen: { book in
                                 open(book, sourceID: CurrentlyReadingStrip.sourceID(for: book))

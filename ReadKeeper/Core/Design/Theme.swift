@@ -19,6 +19,8 @@ enum Theme {
     static var ink: Color { dynamic(light: 0x3B2A1E, dark: 0xF3E6D3) }
     static var card: Color { dynamic(light: 0xFFF9F1, dark: 0x332821) }
     static var star: Color { dynamic(light: 0xD9A23A, dark: 0xE8B95A) }
+    /// Warm tint for highlighted cards (e.g. Currently reading).
+    static var cardGlow: Color { dynamic(light: 0xFCE9D9, dark: 0x402E23) }
 
     static let spineLightText = RGB(hex: 0xF6EBD9)
     static let spineDarkText = RGB(hex: 0x2B1D14)
