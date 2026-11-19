@@ -16,26 +16,34 @@ struct WidgetCover: View {
                     .scaledToFill()
             } else {
                 let style = SpineGenerator.style(title: item.title, author: item.author, pageCount: nil)
-                ZStack {
-                    LinearGradient(
-                        colors: [Color(style.base.mixed(with: .white, amount: 0.1)), Color(style.base.mixed(with: .black, amount: 0.2))],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .strokeBorder(Color(style.accent), lineWidth: 1)
-                        .padding(3)
-                    Text(item.title)
-                        .font(.system(size: 8, weight: .semibold, design: .serif))
-                        .foregroundStyle(Color(style.text))
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.5)
-                        .padding(5)
+                GeometryReader { proxy in
+                    ZStack {
+                        LinearGradient(
+                            colors: [Color(style.base.mixed(with: .white, amount: 0.1)), Color(style.base.mixed(with: .black, amount: 0.2))],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .strokeBorder(Color(style.accent), lineWidth: 1)
+                            .padding(3)
+                        Text(item.title)
+                            .font(.system(size: Self.fontSize(for: item.title, width: proxy.size.width - 10), weight: .semibold, design: .serif))
+                            .foregroundStyle(Color(style.text))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(4)
+                            .padding(5)
+                    }
                 }
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
         .shadow(color: .black.opacity(0.2), radius: 2, x: 1, y: 1)
+    }
+
+    /// Same rule as the app's generated covers: the longest word fits on one line.
+    nonisolated static func fontSize(for title: String, width: Double) -> Double {
+        let longestWord = title.split(whereSeparator: { $0 == " " || $0 == "-" }).map(\.count).max() ?? 1
+        return max(4, min(11, width / (Double(max(longestWord, 1)) * 0.6)))
     }
 }
 
