@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 enum AppTab: String, Hashable, CaseIterable {
@@ -9,6 +10,14 @@ enum AppTab: String, Hashable, CaseIterable {
 
 struct RootView: View {
     @State private var selection: AppTab = LaunchOptions.initialTab
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
+
+    #if DEBUG
+    @Query private var books: [Book]
+    @State private var showingWidgetGallery = LaunchOptions.showsWidgetGallery
+    @State private var debugShareCard: ShareCardKind?
+    #endif
 
     var body: some View {
         TabView(selection: $selection) {
@@ -26,6 +35,31 @@ struct RootView: View {
             }
         }
         .tint(Theme.accent)
+        .onChange(of: scenePhase) { _, phase in
+            // Keep widgets current whenever the user leaves the app.
+            if phase != .active {
+                WidgetRefresher.refresh(context: modelContext)
+            }
+        }
+        #if DEBUG
+        .fullScreenCover(isPresented: $showingWidgetGallery) {
+            WidgetGalleryView()
+        }
+        .sheet(item: $debugShareCard) { kind in
+            ShareCardSheet(kind: kind)
+        }
+        .task {
+            switch LaunchOptions.shareCard {
+            case "shelf": debugShareCard = .shelf
+            case "year": debugShareCard = .year
+            case "book":
+                if let book = books.first(where: { $0.title == "Jane Eyre" }) ?? books.first {
+                    debugShareCard = .book(book)
+                }
+            default: break
+            }
+        }
+        #endif
     }
 }
 

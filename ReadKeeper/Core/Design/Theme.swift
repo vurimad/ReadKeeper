@@ -3,7 +3,8 @@ import UIKit
 
 /// App colors. Placeholder palette until the real art arrives.
 enum Theme {
-    static var accent: Color { Color("AccentColor") }
+    /// Same values as the AccentColor asset, defined in code so the widget extension (no asset catalog) matches.
+    static var accent: Color { dynamic(light: 0xB5643C, dark: 0xD9885E) }
 
     // Wall behind the shelf
     static var wallTop: Color { dynamic(light: 0xF7EDE0, dark: 0x2B221C) }

@@ -46,6 +46,11 @@ shoot 17-shelf-tilted    -RKDemoShelf YES -RKStartTab shelf -RKTilt 0.9
 shoot 18-settings-tilt   -RKInMemory YES -RKStartTab settings
 shoot 19-import-export   -RKInMemory YES -RKStartTab settings -RKOpenImportExport YES
 WAIT=8 shoot 20-import-review -RKInMemory YES -RKStartTab settings -RKOpenImportExport YES -RKSampleImport YES
+shoot 21-widgets         -RKDemoShelf YES -RKWidgetGallery YES
+WAIT=7 shoot 22-share-shelf -RKDemoShelf YES -RKShareCard shelf
+WAIT=7 shoot 23-share-book  -RKDemoShelf YES -RKShareCard book
+WAIT=7 shoot 24-share-year  -RKDemoShelf YES -RKShareCard year
+shoot 25-stats-year      -RKDemoShelf YES -RKStartTab stats -RKStatsScrollTo year
 
 xcrun simctl ui "$UDID" appearance dark
 shoot 07-shelf-demo-dark   -RKDemoShelf YES -RKStartTab shelf

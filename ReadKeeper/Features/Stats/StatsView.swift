@@ -1,3 +1,4 @@
+import Charts
 import SwiftData
 import SwiftUI
 
@@ -5,6 +6,7 @@ struct StatsView: View {
     @Query private var books: [Book]
     @AppStorage(ReadingGoal.storageKey) private var yearlyGoal = 0
     @State private var editingGoal = false
+    @State private var sharingYear = false
 
     var body: some View {
         let now = Date.now
@@ -12,29 +14,139 @@ struct StatsView: View {
         let finishedThisYear = ReadingGoal.booksFinished(in: year, finishDates: books.compactMap(\.dateFinished))
         let streak = StreakCalculator.summary(activityDays: ReadingActivity.activityDays(books: books), today: now)
         let week = ReadingActivity.weekSummary(books: books, now: now)
+        let yearStats = YearStats.compute(books: books, year: year)
 
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    GoalCard(year: year, finished: finishedThisYear, goal: yearlyGoal) {
-                        editingGoal = true
+            ScrollViewReader { reader in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        GoalCard(year: year, finished: finishedThisYear, goal: yearlyGoal) {
+                            editingGoal = true
+                        }
+                        StreakCard(summary: streak)
+                        WeekCard(summary: week)
+                        YearCard(stats: yearStats)
+                            .id("year")
                     }
-                    StreakCard(summary: streak)
-                    WeekCard(summary: week)
-                    Text("More stats, charts and your Year in Books arrive in a later update.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 4)
+                    .padding(16)
                 }
-                .padding(16)
+                .task {
+                    if let target = LaunchOptions.statsScrollTarget {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        reader.scrollTo(target, anchor: .top)
+                    }
+                }
             }
             .background(WallBackground().ignoresSafeArea())
             .navigationTitle("Stats")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        sharingYear = true
+                    } label: {
+                        Label("Share My Year", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(yearStats.booksFinished == 0)
+                }
+            }
             .sheet(isPresented: $editingGoal) {
                 GoalEditorSheet(goal: $yearlyGoal)
             }
+            .sheet(isPresented: $sharingYear) {
+                ShareCardSheet(kind: .year)
+            }
         }
+    }
+}
+
+/// Your year in books: monthly chart, pages, ratings, formats, tropes, longest book.
+private struct YearCard: View {
+    let stats: YearStats
+
+    var body: some View {
+        StatCard(title: "Your \(String(stats.year)) in Books", systemImage: "books.vertical") {
+            if stats.booksFinished == 0 {
+                Text("Finish a book this year to see your monthly chart, favorite tropes and more.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                HStack {
+                    metric("\(stats.booksFinished)", "books")
+                    Divider().frame(height: 36)
+                    metric(stats.pagesFinished.formatted(), "pages")
+                    Divider().frame(height: 36)
+                    metric(stats.averageRating.map { String(format: "%.1f", $0) } ?? "–", "avg rating")
+                }
+
+                Chart {
+                    ForEach(Array(stats.booksPerMonth.enumerated()), id: \.offset) { month, count in
+                        BarMark(
+                            x: .value("Month", Calendar.current.shortMonthSymbols[month]),
+                            y: .value("Books", count)
+                        )
+                        .foregroundStyle(Theme.accent.gradient)
+                        .cornerRadius(3)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: .automatic(desiredCount: 3))
+                }
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisValueLabel()
+                            .font(.system(size: 8))
+                    }
+                }
+                .frame(height: 140)
+                .padding(.top, 4)
+                .accessibilityLabel("Books finished per month")
+
+                if let month = stats.busiestMonth {
+                    Text("Busiest month: \(Calendar.current.monthSymbols[month])")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if !stats.formatCounts.isEmpty {
+                    FlowLayout(spacing: 6) {
+                        ForEach(BookFormat.allCases.filter { stats.formatCounts[$0] != nil }) { format in
+                            ChipView(text: "\(format.title) \(stats.formatCounts[format] ?? 0)", isSelected: false, systemImage: format.systemImage)
+                        }
+                    }
+                }
+
+                if !stats.topTropes.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Favorite tropes")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        FlowLayout(spacing: 6) {
+                            ForEach(stats.topTropes, id: \.self) { ChipView(text: $0) }
+                        }
+                    }
+                }
+
+                if let title = stats.longestBookTitle, let pages = stats.longestBookPages {
+                    Label("Longest: \(title) (\(pages) pages)", systemImage: "ruler")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func metric(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.title2.weight(.semibold))
+                .fontDesign(.serif)
+                .monospacedDigit()
+                .foregroundStyle(Theme.ink)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

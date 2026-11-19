@@ -11,6 +11,7 @@ struct ShelfView: View {
     @State private var selectedBook: Book?
     @State private var zoomSourceID = ""
     @State private var logTarget: Book?
+    @State private var shareCard: ShareCardKind?
     @Namespace private var zoomNamespace
 
     private var arrangement: ShelfArrangement {
@@ -81,6 +82,23 @@ struct ShelfView: View {
                     arrangementMenu
                 }
                 ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button {
+                            shareCard = .shelf
+                        } label: {
+                            Label("Share My Shelf", systemImage: "books.vertical")
+                        }
+                        Button {
+                            shareCard = .year
+                        } label: {
+                            Label("Share My Year", systemImage: "chart.bar")
+                        }
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(books.isEmpty)
+                }
+                ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAdd = true
                     } label: {
@@ -93,6 +111,9 @@ struct ShelfView: View {
             }
             .sheet(item: $logTarget) { book in
                 LogProgressSheet(book: book)
+            }
+            .sheet(item: $shareCard) { kind in
+                ShareCardSheet(kind: kind)
             }
             .task {
                 if let title = LaunchOptions.openBookTitle, selectedBook == nil,

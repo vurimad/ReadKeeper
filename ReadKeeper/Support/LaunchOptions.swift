@@ -50,6 +50,21 @@ enum LaunchOptions {
         debugOnly(arguments.contains("-RKSampleImport"))
     }
 
+    /// Shows every widget design at real size (debug gallery for screenshots).
+    static var showsWidgetGallery: Bool {
+        debugOnly(arguments.contains("-RKWidgetGallery"))
+    }
+
+    /// Opens a share card on launch: "shelf", "book" or "year".
+    static var shareCard: String? {
+        debugOnly(value(after: "-RKShareCard"))
+    }
+
+    /// Scrolls the Stats tab to a section on launch (e.g. "year").
+    static var statsScrollTarget: String? {
+        debugOnly(value(after: "-RKStatsScrollTo"))
+    }
+
     /// Freezes the shelf tilt at this value (-1...1) for screenshots, since the Simulator has no motion sensor.
     static var fixedTilt: Double? {
         debugOnly(value(after: "-RKTilt")).flatMap(Double.init)

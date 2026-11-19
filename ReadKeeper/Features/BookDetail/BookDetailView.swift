@@ -11,6 +11,7 @@ struct BookDetailView: View {
     @State private var showingReview = false
     @State private var showingAddQuote = false
     @State private var confirmingDelete = false
+    @State private var shareCard: ShareCardKind?
 
     var body: some View {
         ScrollView {
@@ -45,6 +46,11 @@ struct BookDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button {
+                        shareCard = .book(book)
+                    } label: {
+                        Label("Share Book Card", systemImage: "square.and.arrow.up")
+                    }
+                    Button {
                         showingEditor = true
                     } label: {
                         Label("Edit Details", systemImage: "pencil")
@@ -70,6 +76,9 @@ struct BookDetailView: View {
         }
         .sheet(isPresented: $showingAddQuote) {
             AddQuoteSheet(book: book)
+        }
+        .sheet(item: $shareCard) { kind in
+            ShareCardSheet(kind: kind)
         }
         .confirmationDialog("Delete this book?", isPresented: $confirmingDelete, titleVisibility: .visible) {
             Button("Delete Book", role: .destructive, action: delete)

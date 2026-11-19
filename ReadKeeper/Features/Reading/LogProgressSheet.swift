@@ -203,6 +203,7 @@ struct LogProgressSheet: View {
             context: modelContext
         )
         try? modelContext.save()
+        WidgetRefresher.refresh(context: modelContext)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         dismiss()
     }

@@ -29,6 +29,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: ReadKeeper
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.books
         INFOPLIST_KEY_NSCameraUsageDescription: "ReadKeeper uses the camera to scan the barcode on the back of your books."
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "ReadKeeper saves the share cards you create to your photo library."
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
@@ -37,10 +38,38 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
         CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - target: ReadKeeperWidgets
     scheme:
       testTargets:
         - ReadKeeperTests
       gatherCoverageData: true
+
+  # Home Screen and Lock Screen widgets. Shares a few files with the app (colors, generated covers,
+  # widget snapshot and views). Reads the app's data through an App Group once signing is set up.
+  ReadKeeperWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ReadKeeperWidgets
+      - path: ReadKeeper/Shared
+      - path: ReadKeeper/Core/Design/RGB.swift
+      - path: ReadKeeper/Core/Design/Theme.swift
+      - path: ReadKeeper/Core/Shelf/SpineGenerator.swift
+      - path: ReadKeeper/Core/Shelf/StableHash.swift
+    info:
+      path: ReadKeeperWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: ReadKeeper
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vurimad.readkeeper.widgets
+        PRODUCT_NAME: ReadKeeperWidgets
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
 
   ReadKeeperTests:
     type: bundle.unit-test
