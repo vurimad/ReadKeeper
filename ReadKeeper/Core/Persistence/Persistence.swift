@@ -7,6 +7,10 @@ enum Persistence {
 
     /// The app's database. Stored on the device for now; iCloud sync is switched on in milestone M4.
     static func makeContainer() -> ModelContainer {
+        // The database lives in Application Support, which doesn't exist on a fresh install.
+        // Creating it first avoids noisy CoreData errors on first launch.
+        try? FileManager.default.createDirectory(at: URL.applicationSupportDirectory, withIntermediateDirectories: true)
+
         let configuration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: LaunchOptions.usesInMemoryStore,
