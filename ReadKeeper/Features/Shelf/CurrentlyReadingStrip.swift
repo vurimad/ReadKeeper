@@ -36,7 +36,7 @@ struct CurrentlyReadingStrip: View {
                     HStack(spacing: 12) {
                         ForEach(books) { book in
                             card(for: book)
-                                .frame(width: 318)
+                                .frame(width: 330)
                         }
                     }
                 }
@@ -56,25 +56,30 @@ private struct CurrentlyReadingCard: View {
     let book: Book
     let onLog: () -> Void
 
-    private let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+    private let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .top, spacing: 16) {
             CoverImageView(book: book)
-                .frame(width: 58, height: 87)
-                .shadow(color: .black.opacity(0.22), radius: 5, x: 2, y: 3)
+                .frame(width: 76, height: 114)
+                .shadow(color: .black.opacity(0.24), radius: 6, x: 2, y: 4)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Title block
                 Text(book.title)
-                    .font(.headline)
+                    .font(.title3.weight(.semibold))
                     .fontDesign(.serif)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .foregroundStyle(Theme.ink)
                 Text(book.displayAuthor)
-                    .font(.caption)
+                    .font(.subheadline)
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
+                    .padding(.top, 2)
 
+                Spacer(minLength: 14)
+
+                // Progress block
                 HStack(alignment: .firstTextBaseline) {
                     Text(book.progressText)
                         .font(.caption.weight(.medium))
@@ -82,33 +87,38 @@ private struct CurrentlyReadingCard: View {
                     Spacer(minLength: 6)
                     if let fraction = book.progressFraction {
                         Text("\(Int((fraction * 100).rounded()))%")
-                            .font(.caption.weight(.bold))
+                            .font(.subheadline.weight(.bold))
                             .foregroundStyle(Theme.accent)
                             .monospacedDigit()
                     }
                 }
-                .padding(.top, 2)
-
                 ReadingProgressBar(fraction: book.progressFraction ?? 0, height: 7)
+                    .padding(.top, 6)
 
-                if let lastRead = ReadingActivity.lastReadText(lastRead: book.sortedLogs.first?.date, now: .now) {
-                    Text(lastRead)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                // Action row
+                HStack(alignment: .center) {
+                    if let lastRead = ReadingActivity.lastReadText(lastRead: book.sortedLogs.first?.date, now: .now) {
+                        Text(lastRead)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Button(action: onLog) {
+                        Label("Log", systemImage: "plus")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Theme.accent, in: Capsule())
+                            .shadow(color: Theme.accent.opacity(0.3), radius: 5, y: 2)
+                    }
+                    .accessibilityLabel("Log progress for \(book.title)")
                 }
+                .padding(.top, 12)
             }
-
-            Button(action: onLog) {
-                Image(systemName: "plus")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 46, height: 46)
-                    .background(Theme.accent, in: Circle())
-                    .shadow(color: Theme.accent.opacity(0.35), radius: 6, y: 3)
-            }
-            .accessibilityLabel("Log progress for \(book.title)")
+            .frame(minHeight: 114)
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             LinearGradient(colors: [Theme.card, Theme.cardGlow], startPoint: .topLeading, endPoint: .bottomTrailing),
