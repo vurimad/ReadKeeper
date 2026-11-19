@@ -40,6 +40,16 @@ enum LaunchOptions {
         debugOnly(arguments.contains("-RKOpenLog"))
     }
 
+    /// Opens Settings → Import & Export on launch.
+    static var opensImportExport: Bool {
+        debugOnly(arguments.contains("-RKOpenImportExport"))
+    }
+
+    /// Shows the import review for a built-in sample Goodreads export.
+    static var showsSampleImport: Bool {
+        debugOnly(arguments.contains("-RKSampleImport"))
+    }
+
     /// Freezes the shelf tilt at this value (-1...1) for screenshots, since the Simulator has no motion sensor.
     static var fixedTilt: Double? {
         debugOnly(value(after: "-RKTilt")).flatMap(Double.init)

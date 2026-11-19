@@ -5,6 +5,20 @@ import SwiftData
 enum Persistence {
     static let schema = Schema([Book.self, ReadingLog.self, Quote.self])
 
+    /// iCloud sync. The data model is already sync-compatible (defaults everywhere, optional
+    /// relationships, no unique constraints). To switch it on once the Apple Developer account exists:
+    /// add the iCloud (CloudKit) capability with this container, then add `CLOUDKIT_SYNC` to
+    /// "Active Compilation Conditions" in project.yml.
+    static let iCloudContainerID = "iCloud.com.vurimad.readkeeper"
+
+    #if CLOUDKIT_SYNC
+    static let isICloudSyncEnabled = true
+    private static let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = .private(iCloudContainerID)
+    #else
+    static let isICloudSyncEnabled = false
+    private static let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = .none
+    #endif
+
     /// The app's database. Stored on the device for now; iCloud sync is switched on in milestone M4.
     static func makeContainer() -> ModelContainer {
         // The database lives in Application Support, which doesn't exist on a fresh install.
@@ -14,7 +28,7 @@ enum Persistence {
         let configuration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: LaunchOptions.usesInMemoryStore,
-            cloudKitDatabase: .none
+            cloudKitDatabase: LaunchOptions.usesInMemoryStore ? .none : cloudKitDatabase
         )
         do {
             let container = try ModelContainer(for: schema, configurations: [configuration])

@@ -2,10 +2,23 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage(TiltMotion.enabledKey) private var tiltEnabled = true
+    @State private var showingImportExport = LaunchOptions.opensImportExport
 
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink {
+                        ImportExportView()
+                    } label: {
+                        Label("Import & Export", systemImage: "arrow.up.arrow.down.square")
+                    }
+                } header: {
+                    Text("Your library")
+                } footer: {
+                    Text("Bring your books from Goodreads or StoryGraph, or save a copy of your library.")
+                }
+
                 Section {
                     Toggle("Tilt effect", isOn: $tiltEnabled)
                         .tint(Theme.accent)
@@ -28,6 +41,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .navigationDestination(isPresented: $showingImportExport) {
+                ImportExportView()
+            }
         }
     }
 }

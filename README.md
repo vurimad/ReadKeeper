@@ -51,6 +51,16 @@ ReadKeeperTests/  Unit tests (Swift Testing)
 scripts/ci/       Simulator selection and screenshot scripts
 ```
 
+## Turning on iCloud sync
+
+The data model is already sync-ready (defaults on every field, optional relationships, no unique
+constraints). Once the Apple Developer account exists:
+
+1. In Xcode, select the ReadKeeper target, then **Signing & Capabilities** → add **iCloud** → check **CloudKit**
+   → add the container `iCloud.com.vurimad.readkeeper`. Also add **Background Modes** → **Remote notifications**.
+2. In `project.yml`, add `SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) CLOUDKIT_SYNC"` to the app target's settings.
+3. Before the first App Store release, deploy the CloudKit schema to Production in the CloudKit Console.
+
 ## Launch arguments (Debug)
 
 | Argument | Effect |
