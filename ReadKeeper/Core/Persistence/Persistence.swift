@@ -3,7 +3,7 @@ import SwiftData
 
 @MainActor
 enum Persistence {
-    static let schema = Schema([Book.self])
+    static let schema = Schema([Book.self, ReadingLog.self, Quote.self])
 
     /// The app's database. Stored on the device for now; iCloud sync is switched on in milestone M4.
     static func makeContainer() -> ModelContainer {
@@ -20,6 +20,8 @@ enum Persistence {
             let container = try ModelContainer(for: schema, configurations: [configuration])
             if LaunchOptions.showsDemoShelf {
                 DemoLibrary.seed(into: container.mainContext)
+                // Registered defaults aren't saved to disk, so the demo goal never leaks into real use.
+                UserDefaults.standard.register(defaults: [ReadingGoal.storageKey: DemoLibrary.yearlyGoal])
             }
             return container
         } catch {

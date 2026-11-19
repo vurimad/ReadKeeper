@@ -27,6 +27,29 @@ final class Book {
     var dateStarted: Date?
     var dateFinished: Date?
 
+    // Reading progress
+    var progressUnitRaw: String = ProgressUnit.pages.rawValue
+    /// Current position: page number, percent (0-100), or minutes into the audiobook.
+    var progressValue: Double = 0
+    /// Audiobook length in minutes.
+    var totalMinutes: Int?
+    var playbackSpeed: Double = 1
+
+    // Your thoughts
+    /// 0.5 ... 5 in half-star steps, nil when not rated.
+    var rating: Double?
+    var review: String?
+    /// 0 ... 5 peppers, nil when not set.
+    var spiceLevel: Int?
+    var tropes: [String] = []
+    var tags: [String] = []
+
+    @Relationship(deleteRule: .cascade, inverse: \ReadingLog.book)
+    var readingLogs: [ReadingLog]? = []
+
+    @Relationship(deleteRule: .cascade, inverse: \Quote.book)
+    var quotes: [Quote]? = []
+
     init(
         title: String,
         author: String,
@@ -54,6 +77,7 @@ final class Book {
         self.coverImageData = coverImageData
         self.statusRaw = status.rawValue
         self.formatRaw = format.rawValue
+        self.progressUnitRaw = ProgressUnit.defaultUnit(for: format).rawValue
         self.sourceRaw = source.rawValue
         self.sourceID = sourceID
         self.dateAdded = dateAdded
@@ -70,6 +94,33 @@ final class Book {
 
     var source: BookSource {
         BookSource(rawValue: sourceRaw) ?? .manual
+    }
+
+    var progressUnit: ProgressUnit {
+        get { ProgressUnit(rawValue: progressUnitRaw) ?? .pages }
+        set { progressUnitRaw = newValue.rawValue }
+    }
+
+    /// 0...1, or nil when the total isn't known (e.g. page count missing).
+    var progressFraction: Double? {
+        ProgressMath.fraction(value: progressValue, unit: progressUnit, pageCount: pageCount, totalMinutes: totalMinutes)
+    }
+
+    /// "p. 120 of 432", "45%", "4h 30m of 9h 10m"
+    var progressText: String {
+        ProgressMath.positionText(value: progressValue, unit: progressUnit, pageCount: pageCount, totalMinutes: totalMinutes)
+    }
+
+    var sortedLogs: [ReadingLog] {
+        (readingLogs ?? []).sorted { $0.date > $1.date }
+    }
+
+    var sortedQuotes: [Quote] {
+        (quotes ?? []).sorted { $0.createdAt > $1.createdAt }
+    }
+
+    var hasThoughts: Bool {
+        rating != nil || spiceLevel != nil || !tropes.isEmpty || !tags.isEmpty || (review?.isEmpty == false)
     }
 
     var coverURL: URL? {

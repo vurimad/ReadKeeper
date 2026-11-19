@@ -6,14 +6,23 @@ struct ShelfView: View {
 
     @State private var showingAdd = LaunchOptions.opensAddSheet
     @State private var selectedBook: Book?
+    @State private var logTarget: Book?
 
     var body: some View {
         let shelfBooks = ShelfOrdering.sorted(books)
+        let reading = shelfBooks.filter { $0.status == .reading }
 
         NavigationStack {
             GeometryReader { proxy in
                 ScrollView {
                     VStack(spacing: 28) {
+                        if !reading.isEmpty {
+                            CurrentlyReadingStrip(books: reading) { book in
+                                logTarget = book
+                            } onOpen: { book in
+                                selectedBook = book
+                            }
+                        }
                         if shelfBooks.isEmpty {
                             EmptyShelfCard { showingAdd = true }
                             ForEach(0..<3, id: \.self) { _ in
@@ -47,6 +56,14 @@ struct ShelfView: View {
             }
             .sheet(isPresented: $showingAdd) {
                 AddBookView()
+            }
+            .sheet(item: $logTarget) { book in
+                LogProgressSheet(book: book)
+            }
+            .task {
+                if let title = LaunchOptions.openBookTitle, selectedBook == nil {
+                    selectedBook = books.first { $0.title == title }
+                }
             }
         }
     }

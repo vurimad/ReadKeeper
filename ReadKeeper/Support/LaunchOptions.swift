@@ -30,6 +30,16 @@ enum LaunchOptions {
         debugOnly(value(after: "-RKSearchQuery"))
     }
 
+    /// Opens the book with this title from the shelf on launch.
+    static var openBookTitle: String? {
+        debugOnly(value(after: "-RKOpenBook"))
+    }
+
+    /// Opens the Log Progress sheet on the book opened with `-RKOpenBook`.
+    static var opensLogSheet: Bool {
+        debugOnly(arguments.contains("-RKOpenLog"))
+    }
+
     private static func value(after flag: String) -> String? {
         guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else {
             return nil

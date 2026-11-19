@@ -61,6 +61,31 @@ enum BookFormat: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 }
 
+/// How reading progress is measured for a book.
+enum ProgressUnit: String, CaseIterable, Identifiable, Codable, Sendable {
+    case pages
+    case percent
+    case minutes
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .pages: "Pages"
+        case .percent: "Percent"
+        case .minutes: "Time"
+        }
+    }
+
+    static func defaultUnit(for format: BookFormat) -> ProgressUnit {
+        switch format {
+        case .audiobook: .minutes
+        case .ebook: .percent
+        case .paperback, .hardcover: .pages
+        }
+    }
+}
+
 /// Where a book's details came from.
 enum BookSource: String, Codable, Sendable {
     case manual

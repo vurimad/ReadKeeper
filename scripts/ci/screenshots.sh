@@ -35,10 +35,17 @@ shoot 03-library-demo    -RKDemoShelf YES -RKStartTab library
 shoot 04-library-empty   -RKInMemory YES -RKStartTab library
 WAIT=12 shoot 05-add-search -RKInMemory YES -RKStartTab shelf -RKOpenAdd YES -RKSearchQuery "pride and prejudice"
 shoot 06-settings        -RKInMemory YES -RKStartTab settings
+shoot 09-book-detail     -RKDemoShelf YES -RKStartTab shelf -RKOpenBook "Pride and Prejudice"
+shoot 10-book-finished   -RKDemoShelf YES -RKStartTab shelf -RKOpenBook "Jane Eyre"
+shoot 11-log-progress    -RKDemoShelf YES -RKStartTab shelf -RKOpenBook "Pride and Prejudice" -RKOpenLog YES
+shoot 12-log-audiobook   -RKDemoShelf YES -RKStartTab shelf -RKOpenBook "Moby-Dick" -RKOpenLog YES
+shoot 13-stats-demo      -RKDemoShelf YES -RKStartTab stats
+shoot 14-stats-empty     -RKInMemory YES -RKStartTab stats
 
 xcrun simctl ui "$UDID" appearance dark
 shoot 07-shelf-demo-dark   -RKDemoShelf YES -RKStartTab shelf
 shoot 08-library-demo-dark -RKDemoShelf YES -RKStartTab library
+shoot 15-stats-demo-dark   -RKDemoShelf YES -RKStartTab stats
 xcrun simctl ui "$UDID" appearance light
 
 # A short screen recording of the demo shelf (scrolling is added in later milestones).

@@ -113,6 +113,10 @@ struct BookDraft: Equatable, Sendable {
         book.coverURLString = coverURL?.absoluteString
         book.coverImageData = coverImageData
         book.format = format
+        if book.progressValue == 0 {
+            // No progress yet, so it's safe to switch to the natural unit for the new format.
+            book.progressUnit = .defaultUnit(for: format)
+        }
         if book.status != status {
             book.setStatus(status, now: now)
         }
