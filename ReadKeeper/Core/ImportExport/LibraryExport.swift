@@ -12,31 +12,34 @@ enum LibraryCSVExport {
     ]
 
     static func csv(for books: [Book]) -> String {
-        let rows = books
-            .sorted { $0.dateAdded < $1.dateAdded }
-            .map { book in
-                [
-                    book.title,
-                    book.author,
-                    book.isbn13 ?? "",
-                    book.pageCount.map(String.init) ?? "",
-                    book.publishedYear.map(String.init) ?? "",
-                    book.publisher ?? "",
-                    book.format.title,
-                    book.status.title,
-                    book.rating.map { formatNumber($0) } ?? "",
-                    book.spiceLevel.map(String.init) ?? "",
-                    book.tropes.joined(separator: ", "),
-                    book.tags.joined(separator: ", "),
-                    book.review ?? "",
-                    day(book.dateAdded),
-                    book.dateStarted.map(day) ?? "",
-                    book.dateFinished.map(day) ?? "",
-                    book.progressValue > 0 ? formatNumber(book.progressValue) : "",
-                    book.progressValue > 0 ? book.progressUnit.title : "",
-                ]
-            }
+        let sorted = books.sorted { $0.dateAdded < $1.dateAdded }
+        let rows: [[String]] = sorted.map(row(for:))
         return CSVWriter.document(header: header, rows: rows)
+    }
+
+    /// One spreadsheet row, built step by step (a single big literal is too slow for the compiler).
+    private static func row(for book: Book) -> [String] {
+        let hasProgress = book.progressValue > 0
+        var fields: [String] = []
+        fields.append(book.title)
+        fields.append(book.author)
+        fields.append(book.isbn13 ?? "")
+        fields.append(book.pageCount.map { String($0) } ?? "")
+        fields.append(book.publishedYear.map { String($0) } ?? "")
+        fields.append(book.publisher ?? "")
+        fields.append(book.format.title)
+        fields.append(book.status.title)
+        fields.append(book.rating.map { formatNumber($0) } ?? "")
+        fields.append(book.spiceLevel.map { String($0) } ?? "")
+        fields.append(book.tropes.joined(separator: ", "))
+        fields.append(book.tags.joined(separator: ", "))
+        fields.append(book.review ?? "")
+        fields.append(day(book.dateAdded))
+        fields.append(book.dateStarted.map { day($0) } ?? "")
+        fields.append(book.dateFinished.map { day($0) } ?? "")
+        fields.append(hasProgress ? formatNumber(book.progressValue) : "")
+        fields.append(hasProgress ? book.progressUnit.title : "")
+        return fields
     }
 
     /// "2026/11/19", the same style Goodreads uses, so other apps can import it back.
