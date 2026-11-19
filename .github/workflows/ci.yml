@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-screenshots:
+    name: Build, test, screenshots
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+      APPETIZE_PUBLIC_KEY: ${{ secrets.APPETIZE_PUBLIC_KEY }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show tool versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Pick simulator
+        id: sim
+        run: |
+          chmod +x scripts/ci/*.sh
+          echo "udid=$(scripts/ci/pick_simulator.sh)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and run tests
+        run: |
+          mkdir -p ci-output
+          set +e
+          xcodebuild test \
+            -project ReadKeeper.xcodeproj \
+            -scheme ReadKeeper \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            -resultBundlePath ci-output/TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            > ci-output/xcodebuild.log 2>&1
+          STATUS=$?
+          set -e
+          # Show only the useful lines (errors, warnings, test results); the full log is uploaded as an artifact.
+          grep -E "error:|warning: |Test case|Test run|Suite|✔|✘|\*\* (BUILD|TEST)" ci-output/xcodebuild.log | tail -300 || true
+          exit $STATUS
+
+      - name: Take screenshots
+        run: |
+          APP="build/Build/Products/Debug-iphonesimulator/ReadKeeper.app"
+          scripts/ci/screenshots.sh "${{ steps.sim.outputs.udid }}" "$APP" screenshots
+
+      - name: Publish screenshots (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          SHA="${GITHUB_SHA::7}"
+          cd screenshots
+          {
+            echo "# ReadKeeper screenshots"
+            echo
+            echo "Commit \`$SHA\` · $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo
+            for f in *.png; do echo "### ${f%.png}"; echo; echo "<img src=\"$f\" width=\"300\">"; echo; done
+            echo "[Screen recording](shelf-demo.mp4)"
+          } > README.md
+          git init -q -b ci-screenshots
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add .
+          git commit -q -m "Screenshots for $SHA"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-screenshots
+          {
+            echo "## Screenshots ($SHA)"
+            echo
+            echo "Browse: https://github.com/${{ github.repository }}/tree/ci-screenshots"
+            echo
+            for f in *.png; do
+              echo "<img src=\"https://raw.githubusercontent.com/${{ github.repository }}/ci-screenshots/$f?v=$SHA\" width=\"220\" title=\"$f\">"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload to Appetize (browser preview)
+        if: env.APPETIZE_API_TOKEN != '' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Appetize needs a simulator build that runs on both Intel and Apple Silicon.
+          xcodebuild build \
+            -project ReadKeeper.xcodeproj \
+            -scheme ReadKeeper \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build-appetize \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO -quiet
+          cd build-appetize/Build/Products/Debug-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent ReadKeeper.app ReadKeeper.zip
+          URL="https://api.appetize.io/v1/apps"
+          if [ -n "$APPETIZE_PUBLIC_KEY" ]; then URL="$URL/$APPETIZE_PUBLIC_KEY"; fi
+          RESPONSE=$(curl -sS -X POST "$URL" \
+            -H "X-API-KEY: $APPETIZE_API_TOKEN" \
+            -F "file=@ReadKeeper.zip" \
+            -F "platform=ios")
+          echo "$RESPONSE" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("Appetize app:", d.get("publicURL") or d.get("publicKey") or d)'
+          PUBLIC_URL=$(echo "$RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("publicURL",""))')
+          if [ -n "$PUBLIC_URL" ]; then
+            echo "## Try it in your browser" >> "$GITHUB_STEP_SUMMARY"
+            echo "$PUBLIC_URL" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readkeeper-ci-${{ github.run_number }}
+          path: |
+            screenshots/
+            ci-output/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 14
