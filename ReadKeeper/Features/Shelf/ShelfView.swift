@@ -1,21 +1,29 @@
+import SwiftData
 import SwiftUI
 
 struct ShelfView: View {
-    @State private var books: [ShelfBook] = LaunchOptions.showsDemoShelf ? DemoLibrary.books : []
+    @Query private var books: [Book]
+
+    @State private var showingAdd = LaunchOptions.opensAddSheet
+    @State private var selectedBook: Book?
 
     var body: some View {
+        let shelfBooks = ShelfOrdering.sorted(books)
+
         NavigationStack {
             GeometryReader { proxy in
                 ScrollView {
                     VStack(spacing: 28) {
-                        if books.isEmpty {
-                            EmptyShelfCard()
+                        if shelfBooks.isEmpty {
+                            EmptyShelfCard { showingAdd = true }
                             ForEach(0..<3, id: \.self) { _ in
-                                ShelfRowView(books: [])
+                                ShelfRowView(books: [], onSelect: { _ in })
                             }
                         } else {
-                            ForEach(rows(forWidth: proxy.size.width), id: \.self) { range in
-                                ShelfRowView(books: Array(books[range]))
+                            ForEach(rows(for: shelfBooks, width: proxy.size.width), id: \.self) { range in
+                                ShelfRowView(books: shelfBooks[range].map(\.shelfBook)) { tapped in
+                                    selectedBook = shelfBooks.first { $0.id == tapped.id }
+                                }
                             }
                         }
                     }
@@ -25,10 +33,25 @@ struct ShelfView: View {
             }
             .background(WallBackground().ignoresSafeArea())
             .navigationTitle("My Shelf")
+            .navigationDestination(item: $selectedBook) { book in
+                BookDetailView(book: book)
+            }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingAdd = true
+                    } label: {
+                        Label("Add Book", systemImage: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAdd) {
+                AddBookView()
+            }
         }
     }
 
-    private func rows(forWidth width: Double) -> [Range<Int>] {
+    private func rows(for books: [Book], width: Double) -> [Range<Int>] {
         let usableWidth = width - 2 * (ShelfMetrics.outerPadding + ShelfMetrics.innerPadding)
         let widths = books.map { SpineGenerator.width(forPages: $0.pageCount) }
         return ShelfLayout.rows(itemWidths: widths, maxWidth: usableWidth, spacing: ShelfMetrics.spineSpacing)
@@ -38,12 +61,19 @@ struct ShelfView: View {
 /// One shelf: books standing on a wooden board.
 struct ShelfRowView: View {
     let books: [ShelfBook]
+    let onSelect: (ShelfBook) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .bottom, spacing: ShelfMetrics.spineSpacing) {
                 ForEach(books) { book in
-                    BookSpineView(book: book, shelfHeight: ShelfMetrics.shelfHeight)
+                    Button {
+                        onSelect(book)
+                    } label: {
+                        BookSpineView(book: book, shelfHeight: ShelfMetrics.shelfHeight)
+                    }
+                    .buttonStyle(SpineButtonStyle())
+                    .accessibilityHint("Opens the book")
                 }
                 Spacer(minLength: 0)
             }
@@ -55,7 +85,18 @@ struct ShelfRowView: View {
     }
 }
 
+/// Lifts the spine slightly while pressed, like pulling a book out.
+struct SpineButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .offset(y: configuration.isPressed ? -6 : 0)
+            .animation(.spring(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
 struct EmptyShelfCard: View {
+    let onAdd: () -> Void
+
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "books.vertical")
@@ -69,13 +110,9 @@ struct EmptyShelfCard: View {
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Theme.ink.opacity(0.75))
-            Button("Add your first book") {}
+            Button("Add your first book", action: onAdd)
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
-                .disabled(true)
-            Text("Adding books arrives in the next build.")
-                .font(.caption)
-                .foregroundStyle(Theme.ink.opacity(0.55))
         }
         .padding(24)
         .frame(maxWidth: .infinity)
@@ -84,6 +121,12 @@ struct EmptyShelfCard: View {
     }
 }
 
+#Preview("Demo shelf") {
+    ShelfView()
+        .modelContainer(Persistence.previewContainer())
+}
+
 #Preview("Empty") {
     ShelfView()
+        .modelContainer(Persistence.previewContainer(withDemoBooks: false))
 }

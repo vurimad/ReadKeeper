@@ -17,26 +17,28 @@ xcrun simctl status_bar "$UDID" override \
   --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 || true
 xcrun simctl install "$UDID" "$APP"
 
+# shoot <name> [launch args...]   (set WAIT=<seconds> to wait longer, e.g. for network)
 shoot() {
   local name="$1"
   shift
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
   xcrun simctl launch "$UDID" "$BUNDLE_ID" "$@" >/dev/null
-  sleep 5
+  sleep "${WAIT:-5}"
   xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null
   echo "Saved $name.png"
 }
 
 xcrun simctl ui "$UDID" appearance light
-shoot 01-shelf-demo   -RKDemoShelf YES -RKStartTab shelf
-shoot 02-shelf-empty  -RKStartTab shelf
-shoot 03-library      -RKStartTab library
-shoot 04-stats        -RKStartTab stats
-shoot 05-settings     -RKStartTab settings
+shoot 01-shelf-demo      -RKDemoShelf YES -RKStartTab shelf
+shoot 02-shelf-empty     -RKInMemory YES -RKStartTab shelf
+shoot 03-library-demo    -RKDemoShelf YES -RKStartTab library
+shoot 04-library-empty   -RKInMemory YES -RKStartTab library
+WAIT=12 shoot 05-add-search -RKInMemory YES -RKStartTab shelf -RKOpenAdd YES -RKSearchQuery "pride and prejudice"
+shoot 06-settings        -RKInMemory YES -RKStartTab settings
 
 xcrun simctl ui "$UDID" appearance dark
-shoot 06-shelf-demo-dark  -RKDemoShelf YES -RKStartTab shelf
-shoot 07-shelf-empty-dark -RKStartTab shelf
+shoot 07-shelf-demo-dark   -RKDemoShelf YES -RKStartTab shelf
+shoot 08-library-demo-dark -RKDemoShelf YES -RKStartTab library
 xcrun simctl ui "$UDID" appearance light
 
 # A short screen recording of the demo shelf (scrolling is added in later milestones).

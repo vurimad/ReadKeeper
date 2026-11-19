@@ -2,7 +2,7 @@ import Foundation
 
 /// Launch arguments used by CI to open specific screens for screenshots.
 ///
-/// Example: `-RKStartTab library` or `-RKDemoShelf YES`
+/// Examples: `-RKStartTab library`, `-RKDemoShelf YES`, `-RKOpenAdd YES -RKSearchQuery "pride and prejudice"`
 enum LaunchOptions {
     private static var arguments: [String] { ProcessInfo.processInfo.arguments }
 
@@ -10,13 +10,24 @@ enum LaunchOptions {
         value(after: "-RKStartTab").flatMap(AppTab.init(rawValue:)) ?? .shelf
     }
 
-    /// Fills the shelf with demo books. Debug builds only.
+    /// Fills the library with demo books (in memory). Debug builds only.
     static var showsDemoShelf: Bool {
-        #if DEBUG
-        return arguments.contains("-RKDemoShelf")
-        #else
-        return false
-        #endif
+        debugOnly(arguments.contains("-RKDemoShelf"))
+    }
+
+    /// Uses a throwaway in-memory database (demo data, screenshots, tests).
+    static var usesInMemoryStore: Bool {
+        showsDemoShelf || debugOnly(arguments.contains("-RKInMemory"))
+    }
+
+    /// Opens the Add Book sheet on launch.
+    static var opensAddSheet: Bool {
+        debugOnly(arguments.contains("-RKOpenAdd"))
+    }
+
+    /// Pre-fills the Add Book search field.
+    static var initialSearchQuery: String? {
+        debugOnly(value(after: "-RKSearchQuery"))
     }
 
     private static func value(after flag: String) -> String? {
@@ -24,5 +35,21 @@ enum LaunchOptions {
             return nil
         }
         return arguments[index + 1]
+    }
+
+    private static func debugOnly(_ value: Bool) -> Bool {
+        #if DEBUG
+        return value
+        #else
+        return false
+        #endif
+    }
+
+    private static func debugOnly(_ value: String?) -> String? {
+        #if DEBUG
+        return value
+        #else
+        return nil
+        #endif
     }
 }

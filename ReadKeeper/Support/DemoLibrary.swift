@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Demo books (public-domain classics) for previews and CI screenshots only.
 /// Never shown to real users: only loaded with the `-RKDemoShelf` launch argument in Debug builds.
@@ -29,4 +30,31 @@ enum DemoLibrary {
         ShelfBook(title: "Anne of Green Gables", author: "L. M. Montgomery", pageCount: 320),
         ShelfBook(title: "Peter Pan", author: "J. M. Barrie", pageCount: 184),
     ]
+
+    /// Status for the demo book at `index`: 2 reading, then mostly read, the last few want-to-read, one DNF.
+    static func status(at index: Int) -> ReadingStatus {
+        switch index {
+        case 0..<2: .reading
+        case 12: .dnf
+        case 0..<19: .read
+        default: .wantToRead
+        }
+    }
+
+    @MainActor
+    static func seed(into context: ModelContext, now: Date = .now) {
+        let day: TimeInterval = 86_400
+        for (index, item) in books.enumerated() {
+            let book = Book(
+                title: item.title,
+                author: item.author,
+                pageCount: item.pageCount,
+                format: index % 4 == 3 ? .hardcover : .paperback,
+                dateAdded: now.addingTimeInterval(-Double(index) * 3 * day)
+            )
+            book.setStatus(status(at: index), now: now.addingTimeInterval(-Double(index) * 2 * day))
+            context.insert(book)
+        }
+        try? context.save()
+    }
 }
