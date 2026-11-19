@@ -41,6 +41,9 @@ shoot 11-log-progress    -RKDemoShelf YES -RKStartTab shelf -RKOpenBook "Pride a
 shoot 12-log-audiobook   -RKDemoShelf YES -RKStartTab shelf -RKOpenBook "Moby-Dick" -RKOpenLog YES
 shoot 13-stats-demo      -RKDemoShelf YES -RKStartTab stats
 shoot 14-stats-empty     -RKInMemory YES -RKStartTab stats
+shoot 16-shelf-by-color  -RKDemoShelf YES -RKStartTab shelf -shelfArrangement color
+shoot 17-shelf-tilted    -RKDemoShelf YES -RKStartTab shelf -RKTilt 0.9
+shoot 18-settings-tilt   -RKInMemory YES -RKStartTab settings
 
 xcrun simctl ui "$UDID" appearance dark
 shoot 07-shelf-demo-dark   -RKDemoShelf YES -RKStartTab shelf

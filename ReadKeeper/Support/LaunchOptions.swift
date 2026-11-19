@@ -40,6 +40,11 @@ enum LaunchOptions {
         debugOnly(arguments.contains("-RKOpenLog"))
     }
 
+    /// Freezes the shelf tilt at this value (-1...1) for screenshots, since the Simulator has no motion sensor.
+    static var fixedTilt: Double? {
+        debugOnly(value(after: "-RKTilt")).flatMap(Double.init)
+    }
+
     private static func value(after flag: String) -> String? {
         guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else {
             return nil

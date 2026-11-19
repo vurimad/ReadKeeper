@@ -35,7 +35,7 @@ struct BookSpineView: View {
                     .rotationEffect(.degrees(-90))
                     .frame(width: style.width, height: height - 26)
 
-                Text(book.authorInitials)
+                Text(book.spineInitials(forWidth: style.width))
                     .font(.system(size: 8, weight: .bold, design: .serif))
                     .foregroundStyle(Color(style.text).opacity(0.85))
                     .lineLimit(1)

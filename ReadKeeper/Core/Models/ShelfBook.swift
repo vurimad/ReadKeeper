@@ -14,6 +14,11 @@ struct ShelfBook: Identifiable, Hashable, Sendable {
         self.pageCount = pageCount
     }
 
+    /// Thin spines only have room for the last-name initial.
+    func spineInitials(forWidth width: Double) -> String {
+        width < 26 ? String(authorInitials.suffix(1)) : authorInitials
+    }
+
     /// "Jane Austen" -> "JA"
     var authorInitials: String {
         author

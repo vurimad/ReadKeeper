@@ -3,8 +3,11 @@ import SwiftUI
 /// "Currently reading" cards above the shelf, with a one-tap Log button.
 struct CurrentlyReadingStrip: View {
     let books: [Book]
+    let namespace: Namespace.ID
     let onLog: (Book) -> Void
     let onOpen: (Book) -> Void
+
+    static func sourceID(for book: Book) -> String { "card-\(book.id.uuidString)" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -14,21 +17,25 @@ struct CurrentlyReadingStrip: View {
                 .foregroundStyle(Theme.ink)
 
             if let only = books.first, books.count == 1 {
-                CurrentlyReadingCard(book: only, onLog: { onLog(only) })
-                    .onTapGesture { onOpen(only) }
+                card(for: only)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(books) { book in
-                            CurrentlyReadingCard(book: book, onLog: { onLog(book) })
+                            card(for: book)
                                 .frame(width: 300)
-                                .onTapGesture { onOpen(book) }
                         }
                     }
                 }
                 .scrollClipDisabled()
             }
         }
+    }
+
+    private func card(for book: Book) -> some View {
+        CurrentlyReadingCard(book: book, onLog: { onLog(book) })
+            .matchedTransitionSource(id: Self.sourceID(for: book), in: namespace)
+            .onTapGesture { onOpen(book) }
     }
 }
 

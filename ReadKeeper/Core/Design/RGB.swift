@@ -41,6 +41,26 @@ struct RGB: Equatable, Hashable, Sendable {
         )
     }
 
+    /// Hue (0..<1), saturation and lightness (0...1). Used to sort books by color.
+    var hsl: (hue: Double, saturation: Double, lightness: Double) {
+        let maxValue = max(red, green, blue)
+        let minValue = min(red, green, blue)
+        let lightness = (maxValue + minValue) / 2
+        let delta = maxValue - minValue
+        guard delta > 0 else { return (0, 0, lightness) }
+
+        let saturation = lightness > 0.5 ? delta / (2 - maxValue - minValue) : delta / (maxValue + minValue)
+        var hue: Double
+        if maxValue == red {
+            hue = (green - blue) / delta + (green < blue ? 6 : 0)
+        } else if maxValue == green {
+            hue = (blue - red) / delta + 2
+        } else {
+            hue = (red - green) / delta + 4
+        }
+        return (hue / 6, saturation, lightness)
+    }
+
     /// WCAG contrast ratio between two colors (1...21).
     func contrastRatio(with other: RGB) -> Double {
         let a = relativeLuminance + 0.05

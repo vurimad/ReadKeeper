@@ -44,6 +44,9 @@ final class Book {
     var tropes: [String] = []
     var tags: [String] = []
 
+    /// Position in the user's own shelf order ("My order"). 0 means not placed yet.
+    var shelfOrder: Double = 0
+
     @Relationship(deleteRule: .cascade, inverse: \ReadingLog.book)
     var readingLogs: [ReadingLog]? = []
 
